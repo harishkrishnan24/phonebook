@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"path"
+	"strconv"
 )
 
 type Entry struct {
@@ -13,10 +15,12 @@ type Entry struct {
 }
 
 var data = []Entry{}
+var MIN = 0
+var MAX = 26
 
 func search(key string) *Entry {
 	for i, v := range data {
-		if v.Surname == key {
+		if v.Tel == key {
 			return &data[i]
 		}
 	}
@@ -29,6 +33,36 @@ func list() {
 	}
 }
 
+func populate(n int, s []Entry) {
+	for i := 0; i < n; i++ {
+		name := getString(4)
+		surname := getString(5)
+		n := strconv.Itoa(random(100, 199))
+		data = append(data, Entry{name, surname, n})
+	}
+}
+
+func random(min, max int) int {
+	return rand.Intn(max-min) + min
+}
+
+func getString(len int64) string {
+	temp := ""
+	startChar := "A"
+	var i int64 = 1
+
+	for {
+		myRand := random(MIN, MAX)
+		newChar := string(startChar[0] + byte(myRand))
+		temp = temp + newChar
+		if i == len {
+			break
+		}
+		i++
+	}
+	return temp
+}
+
 func main() {
 	arguments := os.Args
 
@@ -38,9 +72,9 @@ func main() {
 		return
 	}
 
-	data = append(data, Entry{"Harish", "Krishnan", "42323460987"})
-	data = append(data, Entry{"Krithika", "Ravichandran", "9873456094"})
-	data = append(data, Entry{"Gowri", "Krishnan", "5432349872"})
+	n := 100
+	populate(n, data)
+	fmt.Printf("Data has %d entries.\n", len(data))
 
 	switch arguments[1] {
 	case "search":
