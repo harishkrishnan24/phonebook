@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -18,8 +19,53 @@ type Entry struct {
 	LastAccess string
 }
 
-var data = []Entry{}
+type PhoneBook []Entry
+
+var data = PhoneBook{}
 var index map[string]int
+
+var CSVFILE string = "./phonebook.csv"
+
+func (a PhoneBook) Len() int {
+	return len(a)
+}
+
+func (a PhoneBook) Less(i, j int) bool {
+	if a[i].Surname == a[j].Surname {
+		return a[i].Name < a[j].Name
+	}
+
+	return a[i].Surname < a[j].Surname
+}
+
+func (a PhoneBook) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func setCSVFile() error {
+	filepath := os.Getenv("PHONEBOOK")
+	if filepath != "" {
+		CSVFILE = filepath
+	}
+	_, err := os.Stat(CSVFILE)
+	if err != nil {
+		fmt.Println("Creating", CSVFILE)
+		f, err := os.Create(CSVFILE)
+		if err != nil {
+			f.Close()
+			return err
+		}
+		f.Close()
+	}
+
+	fileInfo, err := os.Stat(CSVFILE)
+	mode := fileInfo.Mode()
+	if !mode.IsRegular() {
+		return fmt.Errorf("%s not a regular file", CSVFILE)
+	}
+
+	return nil
+}
 
 func readCSVFile(filepath string) error {
 	_, err := os.Stat(filepath)
@@ -78,6 +124,7 @@ func search(key string) *Entry {
 }
 
 func list() {
+	sort.Sort(PhoneBook(data))
 	for _, v := range data {
 		fmt.Println(v)
 	}
@@ -137,8 +184,6 @@ func matchTel(key string) bool {
 	return re.Match(t)
 }
 
-const CSVFILE string = "./phonebook.csv"
-
 func main() {
 	arguments := os.Args
 
@@ -148,20 +193,9 @@ func main() {
 		return
 	}
 
-	fileInfo, err := os.Stat(CSVFILE)
+	err := setCSVFile()
 	if err != nil {
-		fmt.Println("Creating", CSVFILE)
-		f, err := os.Create(CSVFILE)
-		if err != nil {
-			f.Close()
-			fmt.Println(err)
-			return
-		}
-		f.Close()
-	}
-	mode := fileInfo.Mode()
-	if !mode.IsRegular() {
-		fmt.Println(CSVFILE, "not a regular file!")
+		fmt.Println(err)
 		return
 	}
 
